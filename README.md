@@ -36,3 +36,70 @@ Dokumentacija projekta je v mapi [`docs/`](docs/):
   - [0009 - Git in GitHub za nadzor različic](docs/adr/0009-git-github-razlicice.md)
 
 
+## Lokalni zagon
+
+### Zahteve
+
+- Node.js 24 ali novejši
+- npm
+- Docker Desktop z Docker Compose
+
+### 1. Priprava okoljskih spremenljivk
+
+V korenski mapi projekta ustvarimo `.env` na podlagi `.env.example` in nastavimo `POSTGRES_PASSWORD`.
+
+V mapi `backend/` ustvarimo `.env` s povezavo do podatkovne baze:
+
+```env
+DATABASE_URL="postgresql://fixdesk:GESLO@localhost:5433/fixdesk?schema=public"
+```
+
+`GESLO` mora biti enako vrednosti `POSTGRES_PASSWORD` v korenski `.env`.
+
+### 2. Zagon PostgreSQL
+
+V korenski mapi projekta izvedemo:
+
+```bash
+docker compose up -d
+```
+
+Podatkovna baza PostgreSQL deluje na `localhost:5433`.
+
+### 3. Zagon backenda
+
+```bash
+cd backend
+npm install
+npx prisma migrate deploy
+npx prisma generate
+npm run dev
+```
+
+Backend je dostopen na `http://localhost:3000`.
+
+Preverjanje povezave z bazo:
+
+`http://localhost:3000/api/db-health`
+
+### 4. Zagon frontenda
+
+V drugem terminalu iz korenske mape projekta:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend je dostopen na `http://localhost:5173`.
+
+### 5. Ustavitev podatkovne baze
+
+V korenski mapi:
+
+```bash
+docker compose down
+```
+
+Podatki v Docker volume ostanejo shranjeni.
