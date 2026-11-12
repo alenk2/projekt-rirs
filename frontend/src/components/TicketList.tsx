@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./TicketList.css";
 import TicketAssignment from "./TicketAssignment";
 import TicketStatusActions from "./TicketStatusActions";
+import TicketComments from "./TicketComments";
 
 const API_URL = "http://localhost:3000";
 
@@ -333,6 +334,18 @@ export default function TicketList({
                 }
                 />
 
+                {(
+                (role === "EMPLOYEE" &&
+                    ticket.creator.id === currentUserId) ||
+                (role === "TECHNICIAN" &&
+                    ticket.assignee?.id === currentUserId)
+                ) && (
+                <TicketComments
+                    key={ticket.id}
+                    ticketId={ticket.id}
+                    isClosed={ticket.status === "CLOSED"}
+                />
+                )}
 
               </div>
             );
