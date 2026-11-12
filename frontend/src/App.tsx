@@ -145,6 +145,7 @@ function App() {
         </section>
         <TicketList
           role={user.role}
+          currentUserId={user.id}
           refreshKey={ticketRefreshKey}
         />
         {user.role === "EMPLOYEE" && (
