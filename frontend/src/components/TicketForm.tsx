@@ -16,7 +16,11 @@ type CreatedTicket = {
   status: string;
 };
 
-export default function TicketForm() {
+type TicketFormProps = {
+  onCreated?: () => void;
+};
+
+export default function TicketForm({ onCreated }: TicketFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -96,6 +100,7 @@ export default function TicketForm() {
       const data: { ticket: CreatedTicket } = await response.json();
 
       setSuccess(data.ticket);
+      onCreated?.();
 
       // Ponastavimo obrazec.
       setTitle("");
