@@ -184,3 +184,58 @@
     width: 100%;
   }
 }
+
+.ticket-assignment {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+}
+
+.ticket-assignment h4 {
+  margin: 0 0 16px;
+}
+
+.ticket-assignment form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ticket-assignment label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ticket-assignment select {
+  min-width: 220px;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  color: #1e293b;
+}
+
+.ticket-assignment button {
+  padding: 11px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.ticket-assignment button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ticket-assignment .form-error {
+  color: #dc2626;
+}
+
+.ticket-assignment .form-success {
+  color: #166534;
+}

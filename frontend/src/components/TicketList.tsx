@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./TicketList.css";
+import TicketAssignment from "./TicketAssignment";
 
 const API_URL = "http://localhost:3000";
 
@@ -114,6 +115,24 @@ export default function TicketList({
     setStatus("");
     setPriority("");
   }
+
+
+    function handleAssigned(
+    ticketId: number,
+    technician: { id: number; fullName: string }
+    ) {
+    setTickets((previousTickets) =>
+        previousTickets.map((ticket) =>
+        ticket.id === ticketId
+            ? {
+                ...ticket,
+                assignee: technician,
+            }
+            : ticket
+        )
+    );
+    }
+
 
   return (
     <section className="ticket-list-card">
@@ -264,6 +283,19 @@ export default function TicketList({
                 {ticket.resolution && (
                   <p><strong>Rešitev:</strong> {ticket.resolution}</p>
                 )}
+
+
+                {role === "ADMIN" && ticket.status !== "CLOSED" && (
+                <TicketAssignment
+                    key={ticket.id}
+                    ticketId={ticket.id}
+                    assignedTo={ticket.assignee?.id ?? null}
+                    onAssigned={(technician) =>
+                    handleAssigned(ticket.id, technician)
+                    }
+                />
+                )}
+
               </div>
             );
           })()}
