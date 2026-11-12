@@ -1,30 +1,65 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db.js";
+import type { UserRole } from "./generated/prisma/client.js";
+
+type SeedUser = {
+  fullName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+};
 
 async function main() {
-  const email = process.env.SEED_USER_EMAIL;
   const password = process.env.SEED_USER_PASSWORD;
 
-  if (!email || !password || password.length < 12) {
-    throw new Error("Invalid seed user configuration");
+  if (!password || password.length < 12) {
+    throw new Error("SEED_USER_PASSWORD must be at least 12 characters");
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: {},
-    create: {
+  const users: SeedUser[] = [
+    {
       fullName: "Test Employee",
-      email,
-      passwordHash,
+      email: "employee@fixdesk.local",
+      password,
       role: "EMPLOYEE",
-      isActive: true,
     },
-  });
+    {
+      fullName: "Test Technician",
+      email: "technician@fixdesk.local",
+      password,
+      role: "TECHNICIAN",
+    },
+    {
+      fullName: "Test Administrator",
+      email: "admin@fixdesk.local",
+      password,
+      role: "ADMIN",
+    },
+  ];
 
-  console.log("Test user ready:", user.email);
+  for (const user of users) {
+    const passwordHash = await bcrypt.hash(user.password, 12);
+
+    await prisma.user.upsert({
+      where: { email: user.email },
+      update: {
+        fullName: user.fullName,
+        role: user.role,
+        isActive: true,
+        passwordHash,
+      },
+      create: {
+        fullName: user.fullName,
+        email: user.email,
+        passwordHash,
+        role: user.role,
+        isActive: true,
+      },
+    });
+
+    console.log(`User ready: ${user.email} (${user.role})`);
+  }
 }
 
 main()

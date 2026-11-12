@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import { requireAuth, requireRole,} from "./middleware/auth.middleware.js";
 
 const app = express();
 const PORT = 3000;
@@ -45,6 +46,25 @@ app.get("/api/db-health", async (_req, res) => {
     });
   }
 });
+
+app.get(
+  "/api/test/admin",
+  requireAuth,
+  requireRole("ADMIN"),
+  (_req, res) => {
+    res.json({ message: "Admin access granted" });
+  }
+);
+
+app.get(
+  "/api/test/technician",
+  requireAuth,
+  requireRole("TECHNICIAN", "ADMIN"),
+  (_req, res) => {
+    res.json({ message: "Technician access granted" });
+  }
+);
+
 
 app.listen(PORT, () => {
   console.log(`FixDesk API running on http://localhost:${PORT}`);

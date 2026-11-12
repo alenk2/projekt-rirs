@@ -67,3 +67,28 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     });
   }
 };
+
+
+import type { UserRole } from "../generated/prisma/client.js";
+
+export function requireRole(...allowedRoles: UserRole[]): RequestHandler {
+  return (_req, res, next) => {
+    const user = res.locals.user;
+
+    if (!user) {
+      res.status(401).json({
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    if (!allowedRoles.includes(user.role)) {
+      res.status(403).json({
+        message: "Access denied",
+      });
+      return;
+    }
+
+    next();
+  };
+}
