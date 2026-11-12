@@ -276,4 +276,120 @@ router.patch(
 );
 
 
+//
+// PATCH /api/tickets/:id/status
+// Spreminjanje statusa IT zahtevka
+//
+
+router.patch("/:id/status", requireAuth, async (req, res) => {
+  try {
+    const ticketId = Number(req.params.id);
+    const { status, resolution } = req.body ?? {};
+    const user = res.locals.user;
+
+    // 1. Preverjanje podatkov
+    if (!Number.isSafeInteger(ticketId) || ticketId <= 0) {
+      res.status(400).json({ message: "Invalid ticket ID" });
+      return;
+    }
+
+    if (!isTicketStatus(status)) {
+      res.status(400).json({ message: "Invalid status" });
+      return;
+    }
+
+    // 2. Poiščemo zahtevek
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+
+    if (!ticket) {
+      res.status(404).json({ message: "Ticket not found" });
+      return;
+    }
+
+    // 3. Preverimo dovoljene prehode
+    const validTransition =
+      (ticket.status === "OPEN" && status === "IN_PROGRESS") ||
+      (ticket.status === "IN_PROGRESS" && status === "RESOLVED") ||
+      (ticket.status === "RESOLVED" && status === "CLOSED");
+
+    if (!validTransition) {
+      res.status(409).json({
+        message: "Invalid status transition",
+      });
+      return;
+    }
+
+    // 4. Preverimo pravice
+    if (status === "IN_PROGRESS" || status === "RESOLVED") {
+      // Samo dodeljeni tehnik lahko obravnava zahtevek
+      if (
+        user.role !== "TECHNICIAN" ||
+        ticket.assignedTo !== user.id
+      ) {
+        res.status(403).json({
+          message: "Only assigned technician can update ticket",
+        });
+        return;
+      }
+    }
+
+    if (status === "CLOSED") {
+      // Samo prijavitelj lahko zaključi zahtevek
+      if (
+        user.role !== "EMPLOYEE" ||
+        ticket.createdBy !== user.id
+      ) {
+        res.status(403).json({
+          message: "Only ticket creator can close ticket",
+        });
+        return;
+      }
+    }
+
+    // 5. Pripravimo podatke za posodobitev
+    const updateData: Prisma.TicketUpdateInput = {
+      status,
+    };
+
+    if (status === "RESOLVED") {
+      if (
+        typeof resolution !== "string" ||
+        !resolution.trim()
+      ) {
+        res.status(400).json({
+          message: "Resolution description is required",
+        });
+        return;
+      }
+
+      updateData.resolution = resolution.trim();
+      updateData.resolvedAt = new Date();
+    }
+
+    if (status === "CLOSED") {
+      updateData.closedAt = new Date();
+    }
+
+    // 6. Posodobimo zahtevek v podatkovni bazi
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: updateData,
+    });
+
+    res.json({
+      message: "Ticket status updated successfully",
+      ticket: updatedTicket,
+    });
+  } catch (error) {
+    console.error("Ticket status update failed:", error);
+
+    res.status(500).json({
+      message: "Failed to update ticket status",
+    });
+  }
+});
+
+
 export default router;
