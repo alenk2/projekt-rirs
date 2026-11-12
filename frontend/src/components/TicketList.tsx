@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./TicketList.css";
 import TicketAssignment from "./TicketAssignment";
+import TicketStatusActions from "./TicketStatusActions";
 
 const API_URL = "http://localhost:3000";
 
@@ -35,6 +36,7 @@ type Ticket = {
 
 type Props = {
   role: UserRole;
+  currentUserId: number;
   refreshKey?: number;
 };
 
@@ -54,6 +56,7 @@ const priorityLabels: Record<Priority, string> = {
 
 export default function TicketList({
   role,
+  currentUserId,
   refreshKey = 0,
 }: Props) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -127,6 +130,27 @@ export default function TicketList({
             ? {
                 ...ticket,
                 assignee: technician,
+            }
+            : ticket
+        )
+    );
+    }
+
+
+    function handleStatusUpdated(
+    ticketId: number,
+    update: {
+        status: TicketStatus;
+        resolution: string | null;
+    }
+    ) {
+    setTickets((previousTickets) =>
+        previousTickets.map((ticket) =>
+        ticket.id === ticketId
+            ? {
+                ...ticket,
+                status: update.status,
+                resolution: update.resolution,
             }
             : ticket
         )
@@ -295,6 +319,20 @@ export default function TicketList({
                     }
                 />
                 )}
+                
+                
+                <TicketStatusActions
+                ticketId={ticket.id}
+                status={ticket.status}
+                creatorId={ticket.creator.id}
+                assignedTo={ticket.assignee?.id ?? null}
+                currentUserId={currentUserId}
+                currentUserRole={role}
+                onUpdated={(update) =>
+                    handleStatusUpdated(ticket.id, update)
+                }
+                />
+
 
               </div>
             );

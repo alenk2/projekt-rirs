@@ -239,3 +239,52 @@
 .ticket-assignment .form-success {
   color: #166534;
 }
+
+.ticket-status-actions {
+  margin-top: 24px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.ticket-status-actions h4 {
+  margin: 0 0 16px;
+}
+
+.ticket-status-actions form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticket-status-actions label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ticket-status-actions textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.ticket-status-actions button {
+  padding: 11px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.ticket-status-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
