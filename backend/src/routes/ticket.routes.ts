@@ -392,4 +392,166 @@ router.patch("/:id/status", requireAuth, async (req, res) => {
 });
 
 
+//
+// GET /api/tickets/:id/comments
+// Pridobivanje komentarjev zahtevka
+//
+
+router.get("/:id/comments", requireAuth, async (req, res) => {
+  try {
+    const ticketId = Number(req.params.id);
+    const user = res.locals.user;
+
+    if (!Number.isSafeInteger(ticketId) || ticketId <= 0) {
+      res.status(400).json({ message: "Invalid ticket ID" });
+      return;
+    }
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: {
+        createdBy: true,
+        assignedTo: true,
+      },
+    });
+
+    if (!ticket) {
+      res.status(404).json({ message: "Ticket not found" });
+      return;
+    }
+
+    const isCreator =
+      user.role === "EMPLOYEE" &&
+      ticket.createdBy === user.id;
+
+    const isAssignedTechnician =
+      user.role === "TECHNICIAN" &&
+      ticket.assignedTo === user.id;
+
+    if (!isCreator && !isAssignedTechnician) {
+      res.status(403).json({ message: "Access denied" });
+      return;
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: { ticketId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: [
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
+    });
+
+    res.json(comments);
+  } catch (error) {
+    console.error("Failed to fetch comments:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch comments",
+    });
+  }
+});
+
+
+//
+// POST /api/tickets/:id/comments
+// Dodajanje komentarja
+//
+
+router.post("/:id/comments", requireAuth, async (req, res) => {
+  try {
+    const ticketId = Number(req.params.id);
+    const user = res.locals.user;
+    const { content } = req.body ?? {};
+
+    if (!Number.isSafeInteger(ticketId) || ticketId <= 0) {
+      res.status(400).json({ message: "Invalid ticket ID" });
+      return;
+    }
+
+    if (
+      typeof content !== "string" ||
+      !content.trim() ||
+      content.trim().length > 2000
+    ) {
+      res.status(400).json({
+        message: "Comment must contain 1-2000 characters",
+      });
+      return;
+    }
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: {
+        createdBy: true,
+        assignedTo: true,
+        status: true,
+      },
+    });
+
+    if (!ticket) {
+      res.status(404).json({ message: "Ticket not found" });
+      return;
+    }
+
+    const isCreator =
+      user.role === "EMPLOYEE" &&
+      ticket.createdBy === user.id;
+
+    const isAssignedTechnician =
+      user.role === "TECHNICIAN" &&
+      ticket.assignedTo === user.id;
+
+    if (!isCreator && !isAssignedTechnician) {
+      res.status(403).json({ message: "Access denied" });
+      return;
+    }
+
+    // Zaključenim zahtevkom ne dodajamo novih komentarjev.
+    if (ticket.status === "CLOSED") {
+      res.status(409).json({
+        message: "Cannot comment on a closed ticket",
+      });
+      return;
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        ticketId,
+        authorId: user.id,
+        content: content.trim(),
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({
+      message: "Comment created successfully",
+      comment,
+    });
+  } catch (error) {
+    console.error("Failed to create comment:", error);
+
+    res.status(500).json({
+      message: "Failed to create comment",
+    });
+  }
+});
+
+
 export default router;
