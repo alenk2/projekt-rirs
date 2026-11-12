@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import "./App.css";
 import TicketForm from "./components/TicketForm";
+import TicketList from "./components/TicketList";
 
 const API_URL = "http://localhost:3000";
 
@@ -22,6 +23,7 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -141,7 +143,15 @@ function App() {
           <p>Uspešno ste prijavljeni v FixDesk.</p>
           {error && <p className="error" role="alert">{error}</p>}
         </section>
-        {user.role === "EMPLOYEE" && <TicketForm />}
+        <TicketList
+          role={user.role}
+          refreshKey={ticketRefreshKey}
+        />
+        {user.role === "EMPLOYEE" && (
+        <TicketForm
+           onCreated={() => setTicketRefreshKey((key) => key + 1)}
+        />
+      )}
       </main>
     );
   }
