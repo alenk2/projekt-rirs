@@ -6,7 +6,10 @@ import {
 import type { Prisma } from "../generated/prisma/client.js";
 
 import { prisma } from "../db.js";
-import { requireAuth } from "../middleware/auth.middleware.js";
+import {
+  requireAuth,
+  requireRole,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -180,5 +183,97 @@ router.get("/", requireAuth, async (req, res) => {
     });
   }
 });
+
+
+// PATCH /api/tickets/:id/assign
+router.patch(
+  "/:id/assign",
+  requireAuth,
+  requireRole("ADMIN"),
+  async (req, res) => {
+    try {
+      const ticketId = Number(req.params.id);
+      const { technicianId } = req.body ?? {};
+
+      // Preverjanje ID-jev
+      if (
+        !Number.isSafeInteger(ticketId) ||
+        ticketId <= 0 ||
+        !Number.isSafeInteger(technicianId) ||
+        technicianId <= 0
+      ) {
+        res.status(400).json({
+          message: "Invalid ticket or technician ID",
+        });
+        return;
+      }
+
+      // Preverimo, ali zahtevek obstaja.
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: ticketId },
+      });
+
+      if (!ticket) {
+        res.status(404).json({
+          message: "Ticket not found",
+        });
+        return;
+      }
+
+      // Zaključenih zahtevkov ne dodeljujemo.
+      if (ticket.status === "CLOSED") {
+        res.status(409).json({
+          message: "Closed tickets cannot be assigned",
+        });
+        return;
+      }
+
+      // Preverimo, ali je uporabnik aktiven IT-tehnik.
+      const technician = await prisma.user.findFirst({
+        where: {
+          id: technicianId,
+          role: "TECHNICIAN",
+          isActive: true,
+        },
+      });
+
+      if (!technician) {
+        res.status(400).json({
+          message: "Invalid or inactive technician",
+        });
+        return;
+      }
+
+      // Dodelimo zahtevek tehniku.
+      const updatedTicket = await prisma.ticket.update({
+        where: { id: ticketId },
+        data: {
+          assignedTo: technician.id,
+        },
+        include: {
+          assignee: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      res.json({
+        message: "Ticket assigned successfully",
+        ticket: updatedTicket,
+      });
+    } catch (error) {
+      console.error("Ticket assignment failed:", error);
+
+      res.status(500).json({
+        message: "Failed to assign ticket",
+      });
+    }
+  }
+);
+
 
 export default router;
