@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { prisma } from "./db.js";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 const PORT = 3000;
@@ -11,6 +13,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
+
+app.use("/api/auth", authRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({
