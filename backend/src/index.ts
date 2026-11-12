@@ -5,6 +5,7 @@ import { prisma } from "./db.js";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
 const app = express();
 const PORT = 3000;
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/tickets", ticketRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({

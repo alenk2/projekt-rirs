@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import "./App.css";
+import TicketForm from "./components/TicketForm";
 
 const API_URL = "http://localhost:3000";
 
@@ -140,6 +141,7 @@ function App() {
           <p>Uspešno ste prijavljeni v FixDesk.</p>
           {error && <p className="error" role="alert">{error}</p>}
         </section>
+        {user.role === "EMPLOYEE" && <TicketForm />}
       </main>
     );
   }
